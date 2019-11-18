@@ -1,34 +1,44 @@
+
 require 'capybara'
 require 'capybara/cucumber'
-require 'byebug'
-require 'selenium-webdriver'
-require 'site_prism'
 require 'rspec'
+require 'site_prism'
+require 'selenium-webdriver'
+
+
+#vão chamar os arquvos de instancias.
 require_relative 'helper.rb'
 require_relative 'page_helper.rb'
 
-World(Pages)
-World(Helper)
+World Capybara::DSL
+World Capybara::RSpecMatchers
 
-ENVIRONMENT_TYPE = ENV['ENVIRONMENT_TYPE']
-HEADLESS = ENV['HEADLESS']
+World Page
+World Helper
 
-CONFIG = YAML.load_file(File.dirname(__FILE__) + "/config/#{ENVIRONMENT_TYPE}.yml")
+BROWSER = ENV['BROWSER']
+ACESSO = ENV['ACESSO']
+
+
+
+
+CONFIG = YAML.load_file(File.dirname(__FILE__) + "/ambientes/#{ACESSO}.yml")
+
 
 ## register driver according with browser chosen
-Capybara.register_driver :selenium do |app|
-  if HEADLESS.eql?('headless')
-    option = ::Selenium::WebDriver::Chrome::Options.new(args: ['--headless', '--disable-gpu', '--window-size=1600,1024'])
-    Capybara::Selenium::Driver.new(app, browser: :chrome, options: option)
-
-  elsif HEADLESS.eql?('no_headless')
-    option = ::Selenium::WebDriver::Chrome::Options.new(args: ['--disable-infobars', 'window-size=1600,1024'])
-    Capybara::Selenium::Driver.new(app, browser: :chrome, options: option)
-  end
+case ENV['BROWSER']
+when "firefox"
+  @driver = :selenium
+when "chrome_headless"
+  @driver = :selenium_chrome_headless
+when "chrome"
+  @driver = :selenium_chrome
+else
+ puts "Browser invalid!"
 end
 
 Capybara.configure do |config|
-  config.default_driver = :selenium
+  config.default_driver = @driver
   config.app_host = CONFIG['url_default']
-  config.default_max_wait_time = 30
+  config.default_max_wait_time = 10
 end
